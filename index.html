@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#05080f" />
+    <meta name="description" content="Silent Night — a first-person Christmas assassination game. Six contracts, six targets, one winter night." />
+    <title>SILENT NIGHT — A Christmas Assassin</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene" aria-label="Game world"></canvas>
+
+      <div class="grade-overlay" aria-hidden="true"></div>
+      <div id="damage-flash" aria-hidden="true"></div>
+
+      <div id="hud" class="hidden">
+        <div class="hud-top">
+          <div class="mission-chip">
+            <span class="eyebrow">CONTRACT <b id="hud-index">01</b></span>
+            <span class="mission-name" id="hud-mission">Silent Night Square</span>
+            <span class="objective"><i class="dot"></i><span id="hud-objective">Secure the objectives</span></span>
+            <div class="task-list" id="task-list"></div>
+          </div>
+          <div class="target-chip">
+            <span class="target-label">TARGET</span>
+            <span class="target-name" id="hud-target">Viktor Kringle</span>
+            <span class="target-distance" id="hud-distance">— m</span>
+            <span class="target-lock locked" id="hud-target-lock">OBJECTIVES 0/2</span>
+          </div>
+        </div>
+
+        <div class="reticle" id="reticle"><span></span></div>
+        <div class="status-line" id="hud-status">UNDETECTED</div>
+        <div class="strike-hint" id="strike-hint">LMB · ELIMINATE</div>
+
+        <div class="hud-bottom">
+          <div class="vitals">
+            <div class="vitals-top"><span>VITALS</span><b id="health-value">100</b></div>
+            <div class="vitals-bar"><i id="health-bar"></i></div>
+          </div>
+          <div class="weapon-panel" id="weapon-panel">
+            <span class="weapon-slot" id="weapon-slot">1</span>
+            <span class="weapon-name" id="weapon-name">KNIFE</span>
+            <span class="weapon-ammo" id="weapon-ammo">—</span>
+          </div>
+          <div class="controls-hint">
+            <span>1/2/3</span> ARMS <span>RMB</span> AIM <span>R</span> RELOAD <span>E</span> INTERACT / TALK <span>M</span> MUTE <span>ESC</span> PAUSE
+          </div>
+        </div>
+      </div>
+
+      <div id="capture-hint" class="capture-hint hidden">
+        <strong>MOUSE NOT CAPTURED</strong>
+        <span>CLICK THE VIEW TO CAPTURE · RIGHT-DRAG OR ARROWS TO AIM</span>
+      </div>
+
+      <div id="event-toast" class="event-toast hidden" role="status" aria-live="polite"></div>
+
+      <div id="radio-toast" class="radio-toast hidden" role="status" aria-live="polite">
+        <span class="radio-kicker">ENCRYPTED CHANNEL · <b>BODYGUARD</b></span>
+        <p id="radio-line"></p>
+      </div>
+
+      <div id="dialogue" class="dialogue hidden" role="status" aria-live="polite">
+        <span id="dialogue-name">BYSTANDER</span>
+        <p id="dialogue-line"></p>
+      </div>
+
+      <div id="interact-prompt" class="interact-prompt hidden">
+        <span id="interact-label">HOLD E · DISABLE SECURITY RELAY</span>
+        <span class="interact-bar"><i id="interact-fill"></i></span>
+      </div>
+
+      <div id="scope-overlay" class="scope-overlay hidden" aria-hidden="true">
+        <div class="scope-reticle">
+          <i class="scope-h"></i>
+          <i class="scope-v"></i>
+          <span class="scope-ring"></span>
+        </div>
+      </div>
+
+      <div id="menu" class="overlay">
+        <div class="menu-inner">
+          <div class="menu-title-block">
+            <p class="kicker">SIX CONTRACTS · ONE WINTER NIGHT</p>
+            <h1 class="title"><span>SILENT</span><span>NIGHT</span></h1>
+            <p class="tagline">A Christmas assassin stalks the snow.<br />Every target has a name. Every name has a price.</p>
+            <div class="menu-meta">
+              <span class="meta-label">FIELD MANUAL</span>
+              <p>Move with WASD. Sprint with Shift, crouch with C. Press 1, 2, 3 for knife, pistol, sniper; R reloads and right mouse aims. Complete every objective before eliminating the target — a premature kill voids the contract. Take the target from behind or the side with the knife; firearms are loud and bring every guard. In the city, press E to talk to bystanders and watch for moving traffic. If a bodyguard sees you kill, he will radio the boss and the target will run.</p>
+            </div>
+            <p class="credit">Headphones recommended · Desktop keyboard &amp; mouse · Progress saved locally</p>
+          </div>
+
+          <div class="contracts">
+            <div class="contracts-head">
+              <span>MISSION SELECT</span>
+              <span id="contract-progress">0 / 6 FULFILLED</span>
+            </div>
+            <div id="mission-list" class="mission-list"></div>
+            <div class="contracts-foot">
+              <span class="live-dot"></span> LIVE SURVEILLANCE FEED
+              <span class="sep">/</span> SELECT A CONTRACT TO DEPLOY
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pause" class="overlay hidden">
+        <div class="panel pause-panel">
+          <p class="kicker">CONTRACT SUSPENDED</p>
+          <h2>HOLD YOUR BREATH</h2>
+          <p class="panel-copy">The target is still moving. Resume when you are ready — if the mouse does not return, click the game view once.</p>
+          <div class="panel-actions">
+            <button class="btn primary" id="resume-btn">RESUME CONTRACT</button>
+            <button class="btn ghost" id="abort-btn">ABANDON TO MISSION SELECT</button>
+          </div>
+          <div class="panel-controls">
+            <span>WASD MOVE</span><span>SHIFT SPRINT</span><span>C CROUCH</span><span>1/2/3 ARMS</span><span>R RELOAD</span><span>E INTERACT</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="result" class="overlay hidden">
+        <div class="panel result-panel">
+          <p class="kicker" id="result-kicker">CONTRACT COMPLETE</p>
+          <h2 id="result-title">TARGET ELIMINATED</h2>
+          <p class="result-target" id="result-target"></p>
+          <p class="panel-copy" id="result-copy"></p>
+          <div class="result-stats" id="result-stats"></div>
+          <div class="panel-actions">
+            <button class="btn primary" id="next-btn">NEXT CONTRACT</button>
+            <button class="btn ghost" id="result-menu-btn">MISSION SELECT</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="loading" class="overlay hidden">
+        <div class="loader">
+          <span class="loader-ring"></span>
+          <p id="loading-text">PREPARING CONTRACT</p>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
